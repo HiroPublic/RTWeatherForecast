@@ -68,6 +68,7 @@ COUNTRY_MATCH_ALIASES = {
 CITY_SEARCH_ALIASES = {
     ("イタリア", "ベネチア"): "Venice",
     ("日本", "大阪"): "Osaka",
+    ("日本", "東京"): "Tokyo",
     ("トルコ", "カッパドキア"): "Cappadocia",
     ("南アフリカ", "クルーガー国立公園（Hoedspruit）"): "Hoedspruit",
     ("ナミビア", "ナミブ砂漠（Windhoek, Sossusvlei）"): "Sossusvlei",

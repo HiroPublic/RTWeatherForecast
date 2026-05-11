@@ -2,6 +2,8 @@
 
 旅程 CSV を入力として、滞在日ごとの天気予報をまとめたレポートを生成する Python ツールです。Open-Meteo の短期予報、季節予報、気候データを日付レンジに応じて切り替え、Markdown、CSV、JSON を同時に出力します。
 
+関連NOTE記事：サファリツアー計画の神ガイド｜『まるまるサファリと大自然の本』レビュー <https://note.com/dr830821/n/n996c47587258>
+
 ## Features
 
 - 旅程 CSV の読込と日付検証
@@ -185,3 +187,13 @@ python3 -m pip install -e .
 - 季節予報は約 7 か月先まで取得できます
 - それより先の日付は気候データで補完します
 - シークレット値は `.env` に置き、Git に含めない運用を想定しています
+
+# License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Author
+
+Copyright (c) 2026 HiroPublic
+
+This project was developed with assistance from generative AI.
