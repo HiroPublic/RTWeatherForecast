@@ -28,6 +28,8 @@ EUROPE_COUNTRIES = {
 NORTH_AMERICA_COUNTRIES = {"USA", "アメリカ", "カナダ", "メキシコ"}
 MIDDLE_EAST_AFRICA_COUNTRIES = {"エジプト", "モロッコ", "ケニア", "南アフリカ", "UAE", "アラブ首長国連邦", "イスラエル", "トルコ"}
 SOUTH_AMERICA_COUNTRIES = {"ペルー", "チリ", "ボリビア", "アルゼンチン", "ブラジル", "コロンビア", "エクアドル"}
+FORECAST_MAX_HORIZON_DAYS = 14
+SEASONAL_MAX_HORIZON_DAYS = 215
 
 
 def _regional_label(country: str) -> str:
@@ -44,9 +46,9 @@ def _regional_label(country: str) -> str:
 
 def decide_source(stay: StayDate, *, today: date) -> SourceDecision:
     horizon_days = (stay.stay_date - today).days
-    if horizon_days <= 16:
+    if horizon_days <= FORECAST_MAX_HORIZON_DAYS:
         provider_kind = "forecast"
-    elif horizon_days <= 215:
+    elif horizon_days <= SEASONAL_MAX_HORIZON_DAYS:
         provider_kind = "seasonal"
     else:
         provider_kind = "climate"

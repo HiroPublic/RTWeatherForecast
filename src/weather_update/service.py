@@ -42,17 +42,7 @@ class WeatherUpdateService:
             try:
                 decision = decide_source(stay, today=today)
                 location = self.client.geocode(stay.city, stay.country)
-                if decision.provider_kind == "forecast":
-                    record = self.client.fetch_forecast_day(location, stay.stay_date, decision.source_label)
-                elif decision.provider_kind == "seasonal":
-                    record = self.client.fetch_seasonal_day(
-                        location,
-                        stay.stay_date,
-                        decision.source_label,
-                        today=today,
-                    )
-                else:
-                    record = self.client.fetch_climate_day(location, stay.stay_date, decision.source_label)
+                record = self._fetch_record(location, stay.stay_date, decision.provider_kind, decision.source_label, today=today)
                 records.append(
                     EnrichedWeatherDataPoint(
                         forecast_date=record.forecast_date,
@@ -70,3 +60,38 @@ class WeatherUpdateService:
 
         records.sort(key=lambda item: (item.forecast_date, item.row_number, item.city, item.country))
         return WeatherReport(generated_at=today, records=records, warnings=warnings)
+
+    def _fetch_record(
+        self,
+        location,
+        target_date: date,
+        provider_kind: str,
+        source_label: str,
+        *,
+        today: date,
+    ) -> WeatherDataPoint:
+        if provider_kind == "forecast":
+            try:
+                return self.client.fetch_forecast_day(location, target_date, source_label)
+            except Exception as exc:
+                if not self._is_forecast_range_error(exc):
+                    raise
+                return self.client.fetch_seasonal_day(
+                    location,
+                    target_date,
+                    source_label,
+                    today=today,
+                )
+        if provider_kind == "seasonal":
+            return self.client.fetch_seasonal_day(
+                location,
+                target_date,
+                source_label,
+                today=today,
+            )
+        return self.client.fetch_climate_day(location, target_date, source_label)
+
+    @staticmethod
+    def _is_forecast_range_error(exc: Exception) -> bool:
+        message = str(exc)
+        return "Parameter 'start_date' is out of allowed range" in message

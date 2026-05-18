@@ -6,10 +6,15 @@ from weather_update.service import WeatherUpdateService
 
 
 class FakeClient:
+    def __init__(self) -> None:
+        self.forecast_calls = 0
+        self.seasonal_calls = 0
+
     def geocode(self, city: str, country: str) -> Location:
         return Location(city=city, country=country, latitude=35.0, longitude=139.0, timezone="Asia/Tokyo")
 
     def fetch_forecast_day(self, location: Location, target_date: date, source_label: str) -> WeatherDataPoint:
+        self.forecast_calls += 1
         return WeatherDataPoint(target_date, "晴れ", 13.0, 27.0, source_label)
 
     def fetch_seasonal_day(
@@ -20,6 +25,7 @@ class FakeClient:
         *,
         today: date,
     ) -> WeatherDataPoint:
+        self.seasonal_calls += 1
         return WeatherDataPoint(target_date, "晴れ", 18.0, 31.0, source_label)
 
     def fetch_climate_day(self, location: Location, target_date: date, source_label: str) -> WeatherDataPoint:
@@ -98,3 +104,31 @@ def test_service_can_limit_processed_stays(tmp_path: Path) -> None:
         "2026-04-09",
         "2026-04-10",
     ]
+
+
+class ForecastRangeErrorClient(FakeClient):
+    def fetch_forecast_day(self, location: Location, target_date: date, source_label: str) -> WeatherDataPoint:
+        self.forecast_calls += 1
+        raise RuntimeError(
+            "HTTP Error 400: Bad Request: "
+            "{\"reason\":\"Parameter 'start_date' is out of allowed range from 2026-02-13 to 2026-06-01\",\"error\":true}"
+        )
+
+
+def test_service_falls_back_to_seasonal_when_forecast_range_is_rejected(tmp_path: Path) -> None:
+    csv_path = tmp_path / "itinerary.csv"
+    csv_path.write_text(
+        "国,都市,到着日,出発日\n"
+        "トルコ,イスタンブール,2026/05/18,2026/05/18\n",
+        encoding="utf-8",
+    )
+    client = ForecastRangeErrorClient()
+    service = WeatherUpdateService(client)
+
+    report = service.build_report(csv_path, today=date(2026, 5, 18))
+
+    assert len(report.records) == 1
+    assert report.records[0].min_temp_c == 18.0
+    assert report.warnings == []
+    assert client.forecast_calls == 1
+    assert client.seasonal_calls == 1
